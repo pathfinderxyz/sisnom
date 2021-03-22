@@ -1,0 +1,8 @@
+id_periodicidad;periodicidad;dias
+3;Trimestral;90
+4;Semestral;180
+5;Anual;365
+1;Quincenal;15
+9;Mensual;30
+7;Semanal;7
+8;Diario;1

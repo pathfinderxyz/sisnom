@@ -1,0 +1,11 @@
+cod_empleado;id_cargos;id_profesion;id_tipo_nomina;id_banco;id_unidad_administrativa;cedula;nombres;apellidos;fecha_nacimiento;fecha_ingreso;direccion;telefonos
+9;10;7;7;4;17;19232006;Pedro Jose;Barrientos Moreno;1989-03-17;2016-02-15;La Asuncion, Municipio Arismendi;04127959788
+10;3;4;2;4;6;13242023;Gustavo;Vargas;1976-06-07;2016-02-01;Punta de Piedras;04268371089
+11;2;7;4;4;6;24438142;Corina Alexandra;Marcano Cordoba;1992-01-04;2016-02-01;Juan Griego;04269378066
+4;5;7;3;4;10;17285212;Maria Virgina;Martinez Morales;1984-09-29;2016-02-15;Porlamar;04123519855
+5;4;7;7;4;10;19682712;Jose Gregorio;Cortesia Rojas;1989-06-04;2014-08-15;Porlamar;04265965799
+6;5;7;3;4;4;14055678;Monica Yesenia;Ferrer Murguey;1979-02-22;2013-10-16;Garcia;04260862436
+7;5;6;3;4;4;17539051;Eduar;Esparragoza;1985-06-02;2016-02-01;La Asuncion;04163984580
+8;5;7;4;4;11;19435734;Jacobo;Vicent;1987-12-16;2015-11-01;Juan Griego;04262992188
+3;3;4;5;4;10;8382020;Milagros Del Valle;Cortesia;1954-04-15;1989-01-01;Porlamar;02952618214
+12;4;4;3;2;6;1111;asaasd;asdasdasd;1989-01-01;2016-11-10;jajajsjasjda;010101

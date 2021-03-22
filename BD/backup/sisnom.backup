@@ -1,0 +1,2237 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 9.5.2
+-- Dumped by pg_dump version 9.5.2
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: pago; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE pago (
+    cod_empleado integer NOT NULL,
+    cod_partida integer NOT NULL,
+    id_tipo_nomina integer NOT NULL,
+    id_banco integer NOT NULL,
+    id_unidad_administrativa integer NOT NULL,
+    monto_pago double precision NOT NULL,
+    fecha_pago date NOT NULL,
+    cedula character varying(9) NOT NULL,
+    nombres character varying(50) NOT NULL,
+    apellidos character varying(50) NOT NULL,
+    periodo_inicio date NOT NULL,
+    periodo_final date NOT NULL
+);
+
+
+ALTER TABLE pago OWNER TO postgres;
+
+--
+-- Name: anos_vencidos; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW anos_vencidos AS
+ SELECT p.cod_empleado,
+    p.cedula,
+    p.nombres,
+    p.apellidos,
+    date_part('year'::text, p.periodo_inicio) AS anos
+   FROM pago p
+  WHERE (p.cod_partida <> 18)
+  GROUP BY p.cod_empleado, p.cedula, p.nombres, p.apellidos, (date_part('year'::text, p.periodo_inicio))
+  ORDER BY p.cod_empleado, (date_part('year'::text, p.periodo_inicio));
+
+
+ALTER TABLE anos_vencidos OWNER TO postgres;
+
+--
+-- Name: banco; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE banco (
+    id_banco integer NOT NULL,
+    nombre_banco character varying(30) NOT NULL
+);
+
+
+ALTER TABLE banco OWNER TO postgres;
+
+--
+-- Name: banco_id_banco_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE banco_id_banco_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE banco_id_banco_seq OWNER TO postgres;
+
+--
+-- Name: banco_id_banco_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE banco_id_banco_seq OWNED BY banco.id_banco;
+
+
+--
+-- Name: cargo; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE cargo (
+    id_cargos integer NOT NULL,
+    cargo character varying(50) NOT NULL
+);
+
+
+ALTER TABLE cargo OWNER TO postgres;
+
+--
+-- Name: cargo_id_cargos_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE cargo_id_cargos_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE cargo_id_cargos_seq OWNER TO postgres;
+
+--
+-- Name: cargo_id_cargos_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE cargo_id_cargos_seq OWNED BY cargo.id_cargos;
+
+
+--
+-- Name: credito_empleado; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE credito_empleado (
+    cod_partida integer NOT NULL,
+    cod_empleado integer NOT NULL,
+    fecha_credito date NOT NULL,
+    monto_credito double precision NOT NULL,
+    monto_actual double precision,
+    cant_de_cuotas integer NOT NULL,
+    cant_cuotas_restantes integer
+);
+
+
+ALTER TABLE credito_empleado OWNER TO postgres;
+
+--
+-- Name: historial_credito; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE historial_credito (
+    cod_partida integer NOT NULL,
+    cod_empleado integer NOT NULL,
+    fecha_credito date NOT NULL,
+    monto_credito double precision NOT NULL
+);
+
+
+ALTER TABLE historial_credito OWNER TO postgres;
+
+--
+-- Name: partida; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE partida (
+    cod_partida integer NOT NULL,
+    partida character varying(50) NOT NULL,
+    tipo character varying(12) NOT NULL,
+    id_periodicidad integer NOT NULL,
+    descripcion text
+);
+
+
+ALTER TABLE partida OWNER TO postgres;
+
+--
+-- Name: credito_historial; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW credito_historial AS
+ SELECT h.cod_partida,
+    pa.partida,
+    count(h.cod_empleado) AS total_integrantes,
+    sum(h.monto_credito) AS total_pagado,
+    h.fecha_credito
+   FROM (historial_credito h
+     LEFT JOIN partida pa ON ((pa.cod_partida = h.cod_partida)))
+  GROUP BY h.cod_partida, pa.partida, h.fecha_credito;
+
+
+ALTER TABLE credito_historial OWNER TO postgres;
+
+--
+-- Name: empleado; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE empleado (
+    cod_empleado integer NOT NULL,
+    id_cargos integer NOT NULL,
+    id_profesion integer NOT NULL,
+    id_tipo_nomina integer NOT NULL,
+    id_banco integer NOT NULL,
+    id_unidad_administrativa integer NOT NULL,
+    cedula character varying(8) NOT NULL,
+    nombres character varying(60),
+    apellidos character varying(60),
+    fecha_nacimiento date NOT NULL,
+    fecha_ingreso date NOT NULL,
+    direccion text,
+    telefonos text
+);
+
+
+ALTER TABLE empleado OWNER TO postgres;
+
+--
+-- Name: hijo_empleado; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE hijo_empleado (
+    cod_hijo integer NOT NULL,
+    cod_empleado integer NOT NULL,
+    nivel_estudio integer NOT NULL,
+    cedula_fecha_nacimiento character varying(15) NOT NULL,
+    nombres character varying(60) NOT NULL,
+    apellidos character varying(60) NOT NULL
+);
+
+
+ALTER TABLE hijo_empleado OWNER TO postgres;
+
+--
+-- Name: profesion; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE profesion (
+    id_profesion integer NOT NULL,
+    profesion character varying(50) NOT NULL
+);
+
+
+ALTER TABLE profesion OWNER TO postgres;
+
+--
+-- Name: tipo_nomina; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE tipo_nomina (
+    id_tipo_nomina integer NOT NULL,
+    tipo_nomina character varying(30) NOT NULL
+);
+
+
+ALTER TABLE tipo_nomina OWNER TO postgres;
+
+--
+-- Name: unidad_administrativa; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE unidad_administrativa (
+    id_unidad_administrativa integer NOT NULL,
+    unidad_administrativa character varying(50) NOT NULL
+);
+
+
+ALTER TABLE unidad_administrativa OWNER TO postgres;
+
+--
+-- Name: l_empleado; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW l_empleado AS
+ SELECT e.cod_empleado,
+    e.cedula,
+    e.nombres,
+    e.apellidos,
+    e.fecha_nacimiento,
+    e.fecha_ingreso,
+    date_part('years'::text, age(now(), ((e.fecha_nacimiento)::timestamp without time zone)::timestamp with time zone)) AS edad,
+    date_part('years'::text, age(now(), ((e.fecha_ingreso)::timestamp without time zone)::timestamp with time zone)) AS antiguedad,
+    e.direccion,
+    e.telefonos,
+    count(h.cod_hijo) AS cantidad_hijos,
+    e.id_cargos,
+    c.cargo,
+    e.id_profesion,
+    p.profesion,
+    e.id_tipo_nomina,
+    t.tipo_nomina,
+    e.id_banco,
+    b.nombre_banco,
+    e.id_unidad_administrativa,
+    u.unidad_administrativa
+   FROM ((((((empleado e
+     LEFT JOIN cargo c ON ((c.id_cargos = e.id_cargos)))
+     LEFT JOIN profesion p ON ((p.id_profesion = e.id_profesion)))
+     LEFT JOIN hijo_empleado h ON ((h.cod_empleado = e.cod_empleado)))
+     LEFT JOIN tipo_nomina t ON ((t.id_tipo_nomina = e.id_tipo_nomina)))
+     LEFT JOIN banco b ON ((b.id_banco = e.id_banco)))
+     LEFT JOIN unidad_administrativa u ON ((u.id_unidad_administrativa = e.id_unidad_administrativa)))
+  GROUP BY e.cod_empleado, e.cedula, e.nombres, e.apellidos, e.fecha_nacimiento, e.fecha_ingreso, (date_part('years'::text, age(now(), ((e.fecha_nacimiento)::timestamp without time zone)::timestamp with time zone))), (date_part('years'::text, age(now(), ((e.fecha_ingreso)::timestamp without time zone)::timestamp with time zone))), e.direccion, e.telefonos, e.id_cargos, c.cargo, e.id_profesion, p.profesion, e.id_tipo_nomina, t.tipo_nomina, e.id_banco, b.nombre_banco, e.id_unidad_administrativa, u.unidad_administrativa
+  ORDER BY e.cod_empleado;
+
+
+ALTER TABLE l_empleado OWNER TO postgres;
+
+--
+-- Name: nomina; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE nomina (
+    cod_empleado integer NOT NULL,
+    cod_partida integer NOT NULL,
+    tipo_partida character varying(10) NOT NULL,
+    monto_nomina double precision NOT NULL
+);
+
+
+ALTER TABLE nomina OWNER TO postgres;
+
+--
+-- Name: detalle_nomina; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW detalle_nomina AS
+ SELECT n.cod_empleado,
+    e.cedula,
+    e.nombres,
+    e.apellidos,
+    n.cod_partida,
+    p.partida,
+    p.tipo,
+    n.tipo_partida,
+    n.monto_nomina,
+    e.id_tipo_nomina,
+    e.tipo_nomina,
+    e.id_banco,
+    e.nombre_banco,
+    e.id_unidad_administrativa,
+    e.unidad_administrativa
+   FROM ((nomina n
+     LEFT JOIN l_empleado e ON ((e.cod_empleado = n.cod_empleado)))
+     LEFT JOIN partida p ON ((p.cod_partida = n.cod_partida)))
+  ORDER BY e.id_unidad_administrativa, n.cod_empleado, n.cod_partida;
+
+
+ALTER TABLE detalle_nomina OWNER TO postgres;
+
+--
+-- Name: nomina_especial; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE nomina_especial (
+    cod_empleado integer NOT NULL,
+    cod_partida integer NOT NULL,
+    tipo_partida character varying(10) NOT NULL,
+    monto_nomina double precision NOT NULL
+);
+
+
+ALTER TABLE nomina_especial OWNER TO postgres;
+
+--
+-- Name: detalle_nomina_especial; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW detalle_nomina_especial AS
+ SELECT n.cod_empleado,
+    e.cedula,
+    e.nombres,
+    e.apellidos,
+    n.cod_partida,
+    p.partida,
+    p.tipo,
+    n.tipo_partida,
+    n.monto_nomina,
+    e.id_tipo_nomina,
+    e.tipo_nomina,
+    e.id_banco,
+    e.nombre_banco,
+    e.id_unidad_administrativa,
+    e.unidad_administrativa
+   FROM ((nomina_especial n
+     LEFT JOIN l_empleado e ON ((e.cod_empleado = n.cod_empleado)))
+     LEFT JOIN partida p ON ((p.cod_partida = n.cod_partida)))
+  ORDER BY e.id_unidad_administrativa, n.cod_empleado, n.cod_partida;
+
+
+ALTER TABLE detalle_nomina_especial OWNER TO postgres;
+
+--
+-- Name: detalle_pago; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW detalle_pago AS
+ SELECT n.cod_empleado,
+    n.cedula,
+    n.nombres,
+    n.apellidos,
+    n.cod_partida,
+    p.partida,
+    p.tipo,
+    n.monto_pago,
+    tn.id_tipo_nomina,
+    tn.tipo_nomina,
+    b.id_banco,
+    b.nombre_banco,
+    ua.id_unidad_administrativa,
+    ua.unidad_administrativa,
+    n.fecha_pago,
+    n.periodo_inicio,
+    n.periodo_final
+   FROM ((((pago n
+     LEFT JOIN tipo_nomina tn ON ((tn.id_tipo_nomina = n.id_tipo_nomina)))
+     LEFT JOIN banco b ON ((b.id_banco = n.id_banco)))
+     LEFT JOIN unidad_administrativa ua ON ((ua.id_unidad_administrativa = n.id_unidad_administrativa)))
+     LEFT JOIN partida p ON ((p.cod_partida = n.cod_partida)))
+  ORDER BY ua.id_unidad_administrativa, n.cod_empleado, n.cod_partida;
+
+
+ALTER TABLE detalle_pago OWNER TO postgres;
+
+--
+-- Name: empleado_cod_empleado_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE empleado_cod_empleado_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE empleado_cod_empleado_seq OWNER TO postgres;
+
+--
+-- Name: empleado_cod_empleado_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE empleado_cod_empleado_seq OWNED BY empleado.cod_empleado;
+
+
+--
+-- Name: formula_partida; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE formula_partida (
+    id_formula integer NOT NULL,
+    cod_partida integer NOT NULL,
+    descripcion_partida character varying(255),
+    descripcion_formula character varying(255),
+    formula character varying(255)
+);
+
+
+ALTER TABLE formula_partida OWNER TO postgres;
+
+--
+-- Name: formula_partida_id_formula_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE formula_partida_id_formula_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE formula_partida_id_formula_seq OWNER TO postgres;
+
+--
+-- Name: formula_partida_id_formula_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE formula_partida_id_formula_seq OWNED BY formula_partida.id_formula;
+
+
+--
+-- Name: formula_partida_nomina; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW formula_partida_nomina AS
+ SELECT f.id_formula,
+    p.cod_partida,
+    f.descripcion_partida,
+    f.descripcion_formula,
+    f.formula,
+    p.tipo
+   FROM (formula_partida f
+     LEFT JOIN partida p ON ((f.cod_partida = p.cod_partida)))
+  ORDER BY f.id_formula;
+
+
+ALTER TABLE formula_partida_nomina OWNER TO postgres;
+
+--
+-- Name: formula_partida_v; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW formula_partida_v AS
+ SELECT f.id_formula,
+    f.cod_partida,
+    f.descripcion_partida,
+    f.descripcion_formula,
+    f.formula,
+    p.partida
+   FROM (formula_partida f
+     LEFT JOIN partida p ON ((p.cod_partida = f.cod_partida)));
+
+
+ALTER TABLE formula_partida_v OWNER TO postgres;
+
+--
+-- Name: guardar_pago; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW guardar_pago AS
+ SELECT n.cod_empleado,
+    n.cod_partida,
+    e.id_tipo_nomina,
+    e.id_banco,
+    e.id_unidad_administrativa,
+    n.monto_nomina,
+    e.cedula,
+    e.nombres,
+    e.apellidos
+   FROM (nomina n
+     LEFT JOIN empleado e ON ((e.cod_empleado = n.cod_empleado)));
+
+
+ALTER TABLE guardar_pago OWNER TO postgres;
+
+--
+-- Name: guardar_pago_especial; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW guardar_pago_especial AS
+ SELECT n.cod_empleado,
+    n.cod_partida,
+    e.id_tipo_nomina,
+    e.id_banco,
+    e.id_unidad_administrativa,
+    n.monto_nomina,
+    e.cedula,
+    e.nombres,
+    e.apellidos
+   FROM (nomina_especial n
+     LEFT JOIN empleado e ON ((e.cod_empleado = n.cod_empleado)));
+
+
+ALTER TABLE guardar_pago_especial OWNER TO postgres;
+
+--
+-- Name: hijo_empleado_cod_hijo_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE hijo_empleado_cod_hijo_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE hijo_empleado_cod_hijo_seq OWNER TO postgres;
+
+--
+-- Name: hijo_empleado_cod_hijo_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE hijo_empleado_cod_hijo_seq OWNED BY hijo_empleado.cod_hijo;
+
+
+--
+-- Name: hijo_empleado_v; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW hijo_empleado_v AS
+ SELECT h.cod_hijo,
+    h.cod_empleado,
+    e.nombres AS nombre_padre,
+    e.apellidos AS apellido_padre,
+    h.nivel_estudio,
+    p.profesion,
+    h.nombres,
+    h.apellidos,
+    h.cedula_fecha_nacimiento
+   FROM ((hijo_empleado h
+     LEFT JOIN empleado e ON ((e.cod_empleado = h.cod_empleado)))
+     LEFT JOIN profesion p ON ((p.id_profesion = h.nivel_estudio)));
+
+
+ALTER TABLE hijo_empleado_v OWNER TO postgres;
+
+--
+-- Name: total_asignaciones; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW total_asignaciones AS
+ SELECT detalle_nomina.cod_empleado,
+    detalle_nomina.cedula,
+    detalle_nomina.nombres,
+    detalle_nomina.apellidos,
+    detalle_nomina.id_tipo_nomina,
+    detalle_nomina.tipo_nomina,
+    detalle_nomina.id_banco,
+    detalle_nomina.nombre_banco,
+    detalle_nomina.id_unidad_administrativa,
+    detalle_nomina.unidad_administrativa,
+    sum(detalle_nomina.monto_nomina) AS total_asignacion
+   FROM detalle_nomina
+  WHERE ((detalle_nomina.tipo)::text = 'Asignacion'::text)
+  GROUP BY detalle_nomina.cod_empleado, detalle_nomina.cedula, detalle_nomina.nombres, detalle_nomina.apellidos, detalle_nomina.id_tipo_nomina, detalle_nomina.tipo_nomina, detalle_nomina.id_banco, detalle_nomina.nombre_banco, detalle_nomina.id_unidad_administrativa, detalle_nomina.unidad_administrativa
+  ORDER BY detalle_nomina.id_unidad_administrativa, detalle_nomina.cod_empleado;
+
+
+ALTER TABLE total_asignaciones OWNER TO postgres;
+
+--
+-- Name: total_deducciones; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW total_deducciones AS
+ SELECT detalle_nomina.cod_empleado,
+    detalle_nomina.cedula,
+    detalle_nomina.nombres,
+    detalle_nomina.apellidos,
+    detalle_nomina.id_tipo_nomina,
+    detalle_nomina.tipo_nomina,
+    detalle_nomina.id_banco,
+    detalle_nomina.nombre_banco,
+    detalle_nomina.id_unidad_administrativa,
+    detalle_nomina.unidad_administrativa,
+    sum(detalle_nomina.monto_nomina) AS total_deducciones
+   FROM detalle_nomina
+  WHERE (((detalle_nomina.tipo)::text = 'Deduccion'::text) OR ((detalle_nomina.tipo)::text = 'Credito'::text))
+  GROUP BY detalle_nomina.cod_empleado, detalle_nomina.cedula, detalle_nomina.nombres, detalle_nomina.apellidos, detalle_nomina.id_tipo_nomina, detalle_nomina.tipo_nomina, detalle_nomina.id_banco, detalle_nomina.nombre_banco, detalle_nomina.id_unidad_administrativa, detalle_nomina.unidad_administrativa
+  ORDER BY detalle_nomina.id_unidad_administrativa, detalle_nomina.cod_empleado;
+
+
+ALTER TABLE total_deducciones OWNER TO postgres;
+
+--
+-- Name: nomina_final; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW nomina_final AS
+ SELECT dn.cod_empleado,
+    dn.cedula,
+    dn.nombres,
+    dn.apellidos,
+    dn.cod_partida,
+    dn.partida,
+    dn.tipo,
+    dn.tipo_partida,
+    dn.monto_nomina,
+    dn.id_tipo_nomina,
+    dn.tipo_nomina,
+    dn.id_banco,
+    dn.nombre_banco,
+    dn.id_unidad_administrativa,
+    dn.unidad_administrativa,
+    ta.total_asignacion,
+    COALESCE(td.total_deducciones, (0)::double precision) AS total_deduccion,
+    COALESCE((ta.total_asignacion - td.total_deducciones), ta.total_asignacion) AS total_neto
+   FROM ((detalle_nomina dn
+     LEFT JOIN total_asignaciones ta ON ((dn.cod_empleado = ta.cod_empleado)))
+     LEFT JOIN total_deducciones td ON ((td.cod_empleado = dn.cod_empleado)));
+
+
+ALTER TABLE nomina_final OWNER TO postgres;
+
+--
+-- Name: numero_cuenta; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE numero_cuenta (
+    id_banco integer NOT NULL,
+    cod_empleado integer NOT NULL,
+    numero_cuenta character varying(100) NOT NULL
+);
+
+
+ALTER TABLE numero_cuenta OWNER TO postgres;
+
+--
+-- Name: nomina_numero_cuenta; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW nomina_numero_cuenta AS
+ SELECT ne.cedula,
+    n.numero_cuenta,
+    ne.monto_nomina,
+    ne.cod_partida
+   FROM (numero_cuenta n
+     LEFT JOIN detalle_nomina_especial ne ON ((ne.cod_empleado = n.cod_empleado)))
+  GROUP BY ne.cedula, n.numero_cuenta, ne.monto_nomina, ne.cod_partida;
+
+
+ALTER TABLE nomina_numero_cuenta OWNER TO postgres;
+
+--
+-- Name: numero_cuenta_v; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW numero_cuenta_v AS
+ SELECT n.id_banco,
+    n.cod_empleado,
+    n.numero_cuenta,
+    e.cedula,
+    e.nombre_banco,
+    e.nombres
+   FROM (numero_cuenta n
+     LEFT JOIN l_empleado e ON ((e.cod_empleado = n.cod_empleado)));
+
+
+ALTER TABLE numero_cuenta_v OWNER TO postgres;
+
+--
+-- Name: total_asignaciones_pago; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW total_asignaciones_pago AS
+ SELECT detalle_pago.cod_empleado,
+    detalle_pago.cedula,
+    detalle_pago.nombres,
+    detalle_pago.apellidos,
+    detalle_pago.id_tipo_nomina,
+    detalle_pago.tipo_nomina,
+    detalle_pago.id_banco,
+    detalle_pago.nombre_banco,
+    detalle_pago.id_unidad_administrativa,
+    detalle_pago.unidad_administrativa,
+    sum(detalle_pago.monto_pago) AS total_asignacion_pago,
+    detalle_pago.fecha_pago,
+    detalle_pago.periodo_inicio,
+    detalle_pago.periodo_final
+   FROM detalle_pago
+  WHERE ((detalle_pago.tipo)::text = 'Asignacion'::text)
+  GROUP BY detalle_pago.cod_empleado, detalle_pago.cedula, detalle_pago.nombres, detalle_pago.apellidos, detalle_pago.id_tipo_nomina, detalle_pago.tipo_nomina, detalle_pago.id_banco, detalle_pago.nombre_banco, detalle_pago.id_unidad_administrativa, detalle_pago.unidad_administrativa, detalle_pago.fecha_pago, detalle_pago.periodo_inicio, detalle_pago.periodo_final
+  ORDER BY detalle_pago.id_unidad_administrativa, detalle_pago.cod_empleado;
+
+
+ALTER TABLE total_asignaciones_pago OWNER TO postgres;
+
+--
+-- Name: total_deducciones_pago; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW total_deducciones_pago AS
+ SELECT detalle_pago.cod_empleado,
+    detalle_pago.cedula,
+    detalle_pago.nombres,
+    detalle_pago.apellidos,
+    detalle_pago.id_tipo_nomina,
+    detalle_pago.tipo_nomina,
+    detalle_pago.id_banco,
+    detalle_pago.nombre_banco,
+    detalle_pago.id_unidad_administrativa,
+    detalle_pago.unidad_administrativa,
+    sum(detalle_pago.monto_pago) AS total_deduccion_pago,
+    detalle_pago.fecha_pago,
+    detalle_pago.periodo_inicio,
+    detalle_pago.periodo_final
+   FROM detalle_pago
+  WHERE (((detalle_pago.tipo)::text = 'Deduccion'::text) OR ((detalle_pago.tipo)::text = 'Credito'::text))
+  GROUP BY detalle_pago.cod_empleado, detalle_pago.cedula, detalle_pago.nombres, detalle_pago.apellidos, detalle_pago.id_tipo_nomina, detalle_pago.tipo_nomina, detalle_pago.id_banco, detalle_pago.nombre_banco, detalle_pago.id_unidad_administrativa, detalle_pago.unidad_administrativa, detalle_pago.fecha_pago, detalle_pago.periodo_inicio, detalle_pago.periodo_final
+  ORDER BY detalle_pago.id_unidad_administrativa, detalle_pago.cod_empleado;
+
+
+ALTER TABLE total_deducciones_pago OWNER TO postgres;
+
+--
+-- Name: pago_final; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW pago_final AS
+ SELECT dn.cod_empleado,
+    dn.cedula,
+    dn.nombres,
+    dn.apellidos,
+    dn.cod_partida,
+    dn.partida,
+    dn.tipo,
+    dn.monto_pago,
+    dn.id_tipo_nomina,
+    dn.tipo_nomina,
+    dn.id_banco,
+    dn.nombre_banco,
+    dn.id_unidad_administrativa,
+    dn.unidad_administrativa,
+    dn.fecha_pago,
+    dn.periodo_inicio,
+    dn.periodo_final,
+    ta.total_asignacion_pago,
+    COALESCE(td.total_deduccion_pago, (0)::double precision) AS total_deduccion_pago,
+    COALESCE((ta.total_asignacion_pago - td.total_deduccion_pago), ta.total_asignacion_pago) AS total_neto_pago
+   FROM ((detalle_pago dn
+     LEFT JOIN total_asignaciones_pago ta ON ((dn.cod_empleado = ta.cod_empleado)))
+     LEFT JOIN total_deducciones_pago td ON ((td.cod_empleado = dn.cod_empleado)));
+
+
+ALTER TABLE pago_final OWNER TO postgres;
+
+--
+-- Name: pago_vacaciones; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW pago_vacaciones AS
+ SELECT pago.cod_partida,
+    pago.cod_empleado,
+    pago.cod_partida AS tipo_vacaciones
+   FROM pago
+  WHERE ((pago.cod_partida = 18) OR (pago.cod_partida = 17) OR (pago.cod_partida = 7));
+
+
+ALTER TABLE pago_vacaciones OWNER TO postgres;
+
+--
+-- Name: partida_cod_partida_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE partida_cod_partida_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE partida_cod_partida_seq OWNER TO postgres;
+
+--
+-- Name: partida_cod_partida_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE partida_cod_partida_seq OWNED BY partida.cod_partida;
+
+
+--
+-- Name: periodicidad; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE periodicidad (
+    id_periodicidad integer NOT NULL,
+    periodicidad character varying(30) NOT NULL,
+    dias integer NOT NULL
+);
+
+
+ALTER TABLE periodicidad OWNER TO postgres;
+
+--
+-- Name: partida_v; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW partida_v AS
+ SELECT p.cod_partida,
+    p.partida,
+    p.tipo,
+    p.id_periodicidad,
+    p.descripcion,
+    pe.periodicidad
+   FROM (partida p
+     LEFT JOIN periodicidad pe ON ((p.id_periodicidad = pe.id_periodicidad)));
+
+
+ALTER TABLE partida_v OWNER TO postgres;
+
+--
+-- Name: periodicidad_id_periodicidad_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE periodicidad_id_periodicidad_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE periodicidad_id_periodicidad_seq OWNER TO postgres;
+
+--
+-- Name: periodicidad_id_periodicidad_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE periodicidad_id_periodicidad_seq OWNED BY periodicidad.id_periodicidad;
+
+
+--
+-- Name: permiso; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE permiso (
+    id_permiso integer NOT NULL,
+    permiso character varying(50) NOT NULL,
+    dias_min integer NOT NULL,
+    dias_max integer NOT NULL
+);
+
+
+ALTER TABLE permiso OWNER TO postgres;
+
+--
+-- Name: permiso_empleado; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE permiso_empleado (
+    id_permiso integer NOT NULL,
+    cod_empleado integer NOT NULL,
+    fecha_inicio date NOT NULL,
+    fecha_final date
+);
+
+
+ALTER TABLE permiso_empleado OWNER TO postgres;
+
+--
+-- Name: permiso_finalizado; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW permiso_finalizado AS
+ SELECT permiso_empleado.id_permiso,
+    permiso_empleado.cod_empleado,
+    permiso_empleado.fecha_inicio,
+    permiso_empleado.fecha_final
+   FROM permiso_empleado
+  WHERE (permiso_empleado.fecha_final > ( SELECT (now())::date AS now));
+
+
+ALTER TABLE permiso_finalizado OWNER TO postgres;
+
+--
+-- Name: permiso_id_permiso_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE permiso_id_permiso_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE permiso_id_permiso_seq OWNER TO postgres;
+
+--
+-- Name: permiso_id_permiso_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE permiso_id_permiso_seq OWNED BY permiso.id_permiso;
+
+
+--
+-- Name: permiso_v; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW permiso_v AS
+ SELECT p.id_permiso,
+    pe.permiso,
+    p.cod_empleado,
+    e.cedula,
+    e.nombres,
+    p.fecha_inicio,
+    p.fecha_final
+   FROM ((permiso_empleado p
+     LEFT JOIN empleado e ON ((p.cod_empleado = e.cod_empleado)))
+     LEFT JOIN permiso pe ON ((pe.id_permiso = p.id_permiso)));
+
+
+ALTER TABLE permiso_v OWNER TO postgres;
+
+--
+-- Name: permiso_tabla; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW permiso_tabla AS
+ SELECT pv.id_permiso,
+    pv.permiso,
+    pv.cod_empleado,
+    pv.cedula,
+    pv.nombres,
+    pv.fecha_inicio,
+    pv.fecha_final,
+    COALESCE(pf.cod_empleado, 0) AS finalizado
+   FROM (permiso_v pv
+     LEFT JOIN permiso_finalizado pf ON (((pv.cod_empleado = pf.cod_empleado) AND (pv.fecha_final = pf.fecha_final) AND (pv.id_permiso = pf.id_permiso) AND (pv.fecha_inicio = pf.fecha_inicio))))
+  ORDER BY pv.cod_empleado, pv.fecha_inicio;
+
+
+ALTER TABLE permiso_tabla OWNER TO postgres;
+
+--
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE profesion_id_profesion_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE profesion_id_profesion_seq OWNER TO postgres;
+
+--
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE profesion_id_profesion_seq OWNED BY profesion.id_profesion;
+
+
+--
+-- Name: tipo_nomina_id_tipo_nomina_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE tipo_nomina_id_tipo_nomina_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE tipo_nomina_id_tipo_nomina_seq OWNER TO postgres;
+
+--
+-- Name: tipo_nomina_id_tipo_nomina_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE tipo_nomina_id_tipo_nomina_seq OWNED BY tipo_nomina.id_tipo_nomina;
+
+
+--
+-- Name: todas_vacaciones_pagadas; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW todas_vacaciones_pagadas AS
+ SELECT pago.cod_empleado,
+    pago.cod_partida,
+    date_part('year'::text, pago.periodo_inicio) AS anos_pagados
+   FROM pago
+  WHERE (pago.cod_partida = 18)
+  GROUP BY (date_part('year'::text, pago.periodo_inicio)), pago.cod_empleado, pago.cod_partida;
+
+
+ALTER TABLE todas_vacaciones_pagadas OWNER TO postgres;
+
+--
+-- Name: unidad_administrativa_id_unidad_administrativa_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE unidad_administrativa_id_unidad_administrativa_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE unidad_administrativa_id_unidad_administrativa_seq OWNER TO postgres;
+
+--
+-- Name: unidad_administrativa_id_unidad_administrativa_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE unidad_administrativa_id_unidad_administrativa_seq OWNED BY unidad_administrativa.id_unidad_administrativa;
+
+
+--
+-- Name: usuario; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE usuario (
+    id_usuario integer NOT NULL,
+    usuario character varying(30) NOT NULL,
+    passwd character varying(255) NOT NULL,
+    nivel integer NOT NULL
+);
+
+
+ALTER TABLE usuario OWNER TO postgres;
+
+--
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE usuario_id_usuario_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE usuario_id_usuario_seq OWNER TO postgres;
+
+--
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE usuario_id_usuario_seq OWNED BY usuario.id_usuario;
+
+
+--
+-- Name: vacaciones_pagados; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW vacaciones_pagados AS
+ SELECT pago.cod_empleado,
+    pago.cod_partida,
+    date_part('year'::text, pago.periodo_inicio) AS anos_pagados
+   FROM pago
+  WHERE ((pago.cod_partida = 7) OR (pago.cod_partida = 17))
+  GROUP BY (date_part('year'::text, pago.periodo_inicio)), pago.cod_empleado, pago.cod_partida;
+
+
+ALTER TABLE vacaciones_pagados OWNER TO postgres;
+
+--
+-- Name: id_banco; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY banco ALTER COLUMN id_banco SET DEFAULT nextval('banco_id_banco_seq'::regclass);
+
+
+--
+-- Name: id_cargos; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY cargo ALTER COLUMN id_cargos SET DEFAULT nextval('cargo_id_cargos_seq'::regclass);
+
+
+--
+-- Name: cod_empleado; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado ALTER COLUMN cod_empleado SET DEFAULT nextval('empleado_cod_empleado_seq'::regclass);
+
+
+--
+-- Name: id_formula; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY formula_partida ALTER COLUMN id_formula SET DEFAULT nextval('formula_partida_id_formula_seq'::regclass);
+
+
+--
+-- Name: cod_hijo; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY hijo_empleado ALTER COLUMN cod_hijo SET DEFAULT nextval('hijo_empleado_cod_hijo_seq'::regclass);
+
+
+--
+-- Name: cod_partida; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY partida ALTER COLUMN cod_partida SET DEFAULT nextval('partida_cod_partida_seq'::regclass);
+
+
+--
+-- Name: id_periodicidad; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY periodicidad ALTER COLUMN id_periodicidad SET DEFAULT nextval('periodicidad_id_periodicidad_seq'::regclass);
+
+
+--
+-- Name: id_permiso; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY permiso ALTER COLUMN id_permiso SET DEFAULT nextval('permiso_id_permiso_seq'::regclass);
+
+
+--
+-- Name: id_profesion; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY profesion ALTER COLUMN id_profesion SET DEFAULT nextval('profesion_id_profesion_seq'::regclass);
+
+
+--
+-- Name: id_tipo_nomina; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY tipo_nomina ALTER COLUMN id_tipo_nomina SET DEFAULT nextval('tipo_nomina_id_tipo_nomina_seq'::regclass);
+
+
+--
+-- Name: id_unidad_administrativa; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY unidad_administrativa ALTER COLUMN id_unidad_administrativa SET DEFAULT nextval('unidad_administrativa_id_unidad_administrativa_seq'::regclass);
+
+
+--
+-- Name: id_usuario; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY usuario ALTER COLUMN id_usuario SET DEFAULT nextval('usuario_id_usuario_seq'::regclass);
+
+
+--
+-- Data for Name: banco; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY banco (id_banco, nombre_banco) FROM stdin;
+1	Banco Mercantil
+2	Banco del Caribe
+3	Banco de Venezuela
+4	Banco Bicentenario
+5	Banco del Pueblo
+6	Banco Guayana
+7	Banco BanPlus
+8	Banco Banesco
+9	Banco Provincial
+\.
+
+
+--
+-- Name: banco_id_banco_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('banco_id_banco_seq', 1, false);
+
+
+--
+-- Data for Name: cargo; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY cargo (id_cargos, cargo) FROM stdin;
+4	Coordinador de Informatica
+5	Asistente de Oficina
+6	Directora de Recursos Humanos
+3	Obrero
+2	Secretario
+1	Alcalde
+12	Coordinador
+7	Director de Hacienda
+8	Arquitecto
+9	Ingeniero Municipal
+10	Ingeniero
+13	Bedel
+14	Administrador
+\.
+
+
+--
+-- Name: cargo_id_cargos_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('cargo_id_cargos_seq', 1, false);
+
+
+--
+-- Data for Name: credito_empleado; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY credito_empleado (cod_partida, cod_empleado, fecha_credito, monto_credito, monto_actual, cant_de_cuotas, cant_cuotas_restantes) FROM stdin;
+6	4	2016-04-26	10000	5000	2	1
+\.
+
+
+--
+-- Data for Name: empleado; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY empleado (cod_empleado, id_cargos, id_profesion, id_tipo_nomina, id_banco, id_unidad_administrativa, cedula, nombres, apellidos, fecha_nacimiento, fecha_ingreso, direccion, telefonos) FROM stdin;
+9	10	7	7	4	17	19232006	Pedro Jose	Barrientos Moreno	1989-03-17	2016-02-15	La Asuncion, Municipio Arismendi	04127959788
+10	3	4	2	4	6	13242023	Gustavo	Vargas	1976-06-07	2016-02-01	Punta de Piedras	04268371089
+11	2	7	4	4	6	24438142	Corina Alexandra	Marcano Cordoba	1992-01-04	2016-02-01	Juan Griego	04269378066
+4	5	7	3	4	10	17285212	Maria Virgina	Martinez Morales	1984-09-29	2016-02-15	Porlamar	04123519855
+5	4	7	7	4	10	19682712	Jose Gregorio	Cortesia Rojas	1989-06-04	2014-08-15	Porlamar	04265965799
+6	5	7	3	4	4	14055678	Monica Yesenia	Ferrer Murguey	1979-02-22	2013-10-16	Garcia	04260862436
+7	5	6	3	4	4	17539051	Eduar	Esparragoza	1985-06-02	2016-02-01	La Asuncion	04163984580
+12	12	5	4	4	17	19016737	Oriana	Escobar Arteaga	1989-04-24	2015-02-02	Porlamar, Calle Doña Isabel, casa	04246199909 04265965799
+13	12	7	3	4	8	20903635	Jose	Carvajal	1991-10-18	2014-01-01	porlamar	04166950563
+8	5	7	4	4	11	19435734	Jacobo	Vicent	1987-12-16	1997-11-01	Juan Griego	04262992188
+3	13	8	6	4	1	8382020	Milagros Del Valle	Cortesia	1971-04-17	1998-01-01	Porlamar Calle Doña Isabel	02952618212
+14	13	5	4	4	4	1111	Pedro P	Perez J	1989-01-01	2014-01-01	Porlamar	02952122222 0426666666
+15	2	4	7	4	12	2222	Olga	MA	1989-01-01	2014-01-01	Boca de rio	
+\.
+
+
+--
+-- Name: empleado_cod_empleado_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('empleado_cod_empleado_seq', 1, false);
+
+
+--
+-- Data for Name: formula_partida; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY formula_partida (id_formula, cod_partida, descripcion_partida, descripcion_formula, formula) FROM stdin;
+10	25	Matrimonio	Quinientos (500) Bs por casamiento	500
+13	28	Gastos Mortuorios	Doscientos veinte (220) Bs	220
+14	29	Uniformes Empleados	Trescientos (300) Bs	300
+15	30	Prima de Profesionalizacion Universitario	Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.	200
+16	30	Prima de Profesionalizacion T.S.U.	Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.	100
+17	30	Prima de Profesionalizacion Tecnico Medio	Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.	75
+18	31	Jerarquia	Veinte (20) Bs  (Pagados a Directores y Coordinadores).	20
+2	19	Nacimiento por Hijo	Doscientos cincuenta (250) Bs. por hijo	250*$cant_hijo
+3	20	Beca Estudiantil Prescolar	Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.	20*$cant_hijos
+5	20	Beca Estudiantil Secundaria	Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.	30*$cant_hijos
+6	20	Beca Estudiantil Tecnico	Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.	40*$cant_hijos
+7	21	Becas, útiles y uniformes	Becas, útiles y uniformes. Doscientos diez (210) Bs. anual, para los empleados y obrero con hijos	210*$cant_hijos
+8	22	Juguetes	Doscientos (200) Bs, para los empleados y obrero con hijos.	200*$cant_hijos
+58	34	Sindicato Extraordinario	Mil (1.000) Bs Anual (en el aguinaldo).	1000
+60	8	Matrimonio	500 Bs, por Matrimonio	500
+20	3	Aporte Patronal L.P.H.	Segun la ley se calcula el 2% del sueldo base	$sueldo_base*0.02
+22	5	Aporte Patronal Fondo de Jubilacion	Segun la ley se calcula el 3% del sueldo base	$sueldo_base*0.03
+25	7	Vacaciones 3 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*81
+27	7	Vacaciones 5 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*87
+28	7	Vacaciones 6 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*90
+29	7	Vacaciones 7 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*93
+30	7	Vacaciones 8 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*96
+31	7	Vacaciones 9 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*99
+32	9	Aguinaldos	Noventa (90) días de salario (tres (3) meses de salario pagados todos los treinta (30) de noviembre).	($sueldo_base/15)*90
+33	10	Aporte Trabajador IVSS	Segun la ley se calcula el 4% del sueldo base	$sueldo_base*0.04
+34	11	Aporte Trabajador L.P.H.	Segun la ley se calcula el 1% del sueldo base	$sueldo_base*0.01
+39	17	Vacaciones Fraccionadas 2 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*78)/6
+41	17	Vacaciones Fraccionadas 4 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*84)/6
+42	17	Vacaciones Fraccionadas 5 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*87)/6
+43	17	Vacaciones Fraccionadas 6 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*90)/6
+44	17	Vacaciones Fraccionadas 7 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*93)/6
+45	17	Vacaciones Fraccionadas 8 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*96)/6
+46	17	Vacaciones Fraccionadas 9 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*99)/6
+47	18	Vaciones Vencidas 1 año de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*75)*$anos_vencidos
+48	18	Vaciones Vencidas 2 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*78)*$anos_vencidos
+49	18	Vaciones Vencidas 3 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*81)*$anos_vencidos
+50	18	Vaciones Vencidas 4 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*84)*$anos_vencidos
+51	18	Vaciones Vencidas 5 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*87)*$anos_vencidos
+24	7	Vacaciones 2 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*78
+11	26	Hogar	Veinte (20) Bs. mensual Diez (10) Bs. Quincenal	10
+1	16	Antiguedad Acumulada	Cinco (5) Bs. mensual pagado por cada año de servicio	$antiguedad*5
+4	20	Beca Estudiantil Primaria	Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.	25*$cant_hijos
+9	24	Aumento de sueldo	Quince por ciento (15%) de aumento anual 15 de Enero (Solo Empleados Fijos y Jubilados Empleados).	$sueldo_base*0.15
+56	32	Caja de Ahorro	Diez por ciento (10) % mensual	$sueldo_base*0.1
+59	6	Muebleria	Credito	$credito/$cantidad_cuotas
+62	15	Farmacia	Credito	$credito/$cantidad_cuotas
+36	13	Aporte Trabajador Fondo de Jubilacion	Segun la ley se calcula el 3% del sueldo base	$sueldo_base*0.03
+35	12	Aporte Trabajador Ley de Paro Forzoso	Segun la ley se calcula el 0.5% del sueldo base	$sueldo_base*0.05
+23	7	Vacaciones 1 año de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*75
+26	7	Vacaciones 4 años de antiguedad	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario	($sueldo_base/15)*84
+57	33	Sindicato	Veinte decimas (0,20) Bs. mensual Diez decimas (0,10) Bs. Quincenal	0.10
+61	14	Inasistencias	Se descuenta los dias que no trabajo	($sueldo_base/15)*$inasistencias
+38	17	Vacaciones Fraccionadas 1 año de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*75)/6
+40	17	Vacaciones Fraccionadas 3 años de servicio	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad	(($sueldo_base/15)*81)/6
+52	18	Vaciones Vencidas 6 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*90)*$anos_vencidos
+53	18	Vaciones Vencidas 7 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*93)*$anos_vencidos
+54	18	Vaciones Vencidas 8 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*96)*$anos_vencidos
+55	18	Vaciones Vencidas 9 años de servicio	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute	(($sueldo_base/15)*99)*$anos_vencidos
+21	4	Aporte Patronal Ley de Paro Forsozo	Segun la ley se calcula el 2% del sueldo base	$sueldo_base*0.02
+12	27	Prima de transporte	Ochenta (80) Bs. mensual Cuarenta (40) Bs. Quincenal	40
+63	36	bono	se paga 1000 bs	1000
+19	2	Aporte Patronal IVSS	Segun la ley es el 9% del sueldo base	$sueldo_base*0.09
+\.
+
+
+--
+-- Name: formula_partida_id_formula_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('formula_partida_id_formula_seq', 1, false);
+
+
+--
+-- Data for Name: hijo_empleado; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY hijo_empleado (cod_hijo, cod_empleado, nivel_estudio, cedula_fecha_nacimiento, nombres, apellidos) FROM stdin;
+5	4	2	04-04-2005	David Alejandro	Zambrano Martinez
+6	12	2	24-04-2012	Matias  Agustin	Gonzales Escobar
+7	13	2	01/01/2010	Jose	Carvajal
+8	3	7	20111111	Gregori	Cortesia
+2	3	6	19682712	Jose G	Cortesia R
+9	14	2	2016-01-01	Pedro	Perez
+\.
+
+
+--
+-- Name: hijo_empleado_cod_hijo_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('hijo_empleado_cod_hijo_seq', 1, false);
+
+
+--
+-- Data for Name: historial_credito; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY historial_credito (cod_partida, cod_empleado, fecha_credito, monto_credito) FROM stdin;
+6	4	2016-04-26	10000
+\.
+
+
+--
+-- Data for Name: nomina; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY nomina (cod_empleado, cod_partida, tipo_partida, monto_nomina) FROM stdin;
+5	1	FIJA	15000
+7	1	FIJA	10000
+8	1	FIJA	9500
+9	1	FIJA	15000
+10	1	FIJA	9500
+11	1	FIJA	11000
+11	2	FIJA	1100
+11	3	FIJA	220
+11	4	FIJA	220
+11	5	FIJA	330
+11	10	FIJA	440
+11	11	FIJA	110
+11	12	FIJA	550
+11	13	FIJA	330
+4	27	FIJA	40
+10	2	FIJA	950
+10	3	FIJA	190
+10	4	FIJA	190
+10	5	FIJA	285
+10	10	FIJA	380
+10	11	FIJA	95
+10	12	FIJA	475
+10	13	FIJA	285
+3	1	FIJA	3330.02
+13	12	FIJA	500
+13	13	FIJA	300
+12	1	FIJA	15000
+8	2	FIJA	950
+12	2	FIJA	1500
+12	3	FIJA	300
+12	4	FIJA	300
+12	5	FIJA	450
+8	3	FIJA	190
+13	1	FIJA	10000
+12	10	FIJA	600
+12	11	FIJA	150
+12	12	FIJA	750
+12	13	FIJA	450
+8	4	FIJA	190
+8	5	FIJA	285
+8	10	FIJA	380
+8	11	FIJA	95
+8	12	FIJA	475
+8	13	FIJA	285
+6	2	FIJA	1500
+6	3	FIJA	300
+6	4	FIJA	300
+6	5	FIJA	450
+6	10	FIJA	600
+6	11	FIJA	150
+6	12	FIJA	750
+6	13	FIJA	450
+13	2	FIJA	1000
+13	3	FIJA	200
+13	4	FIJA	200
+13	5	FIJA	300
+13	10	FIJA	400
+13	11	FIJA	100
+6	1	FIJA	10000
+7	2	FIJA	1000
+7	3	FIJA	200
+7	4	FIJA	200
+7	5	FIJA	300
+7	10	FIJA	400
+7	11	FIJA	100
+7	12	FIJA	500
+7	13	FIJA	300
+3	2	FIJA	333.00200000000001
+4	1	FIJA	13000
+4	2	FIJA	1170
+4	3	FIJA	260
+4	4	FIJA	260
+4	5	FIJA	390
+4	10	FIJA	520
+4	11	FIJA	130
+4	12	FIJA	650
+4	13	FIJA	390
+4	6	CREDITO	5000
+\.
+
+
+--
+-- Data for Name: nomina_especial; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY nomina_especial (cod_empleado, cod_partida, tipo_partida, monto_nomina) FROM stdin;
+\.
+
+
+--
+-- Data for Name: numero_cuenta; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY numero_cuenta (id_banco, cod_empleado, numero_cuenta) FROM stdin;
+4	3	1500-01-0000011111
+4	4	1234-43-55554212-08
+4	12	123-12121-111111111
+4	14	11-11111-23232-1111
+\.
+
+
+--
+-- Data for Name: pago; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY pago (cod_empleado, cod_partida, id_tipo_nomina, id_banco, id_unidad_administrativa, monto_pago, fecha_pago, cedula, nombres, apellidos, periodo_inicio, periodo_final) FROM stdin;
+5	1	7	4	10	15000	2016-04-25	19682712	Jose Gregorio	Cortesia Rojas	2016-04-01	2016-04-15
+6	1	3	4	4	15000	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+7	1	3	4	4	10000	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+8	1	4	4	11	9500	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+9	1	7	4	17	15000	2016-04-25	19232006	Pedro Jose	Barrientos Moreno	2016-04-01	2016-04-15
+10	1	2	4	6	9500	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+11	1	4	4	6	11000	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	2	4	4	6	1100	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	3	4	4	6	220	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	4	4	4	6	220	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	5	4	4	6	330	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	10	4	4	6	440	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	11	4	4	6	110	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	12	4	4	6	550	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+11	13	4	4	6	330	2016-04-25	24438142	Corina Alexandra	Marcano Cordoba	2016-04-01	2016-04-15
+4	27	3	4	10	40	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+10	2	2	4	6	950	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	3	2	4	6	190	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	4	2	4	6	190	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	5	2	4	6	285	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	10	2	4	6	380	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	11	2	4	6	95	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	12	2	4	6	475	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+10	13	2	4	6	285	2016-04-25	13242023	Gustavo	Vargas	2016-04-01	2016-04-15
+3	1	6	4	1	3330.02	2016-04-25	8382020	Milagros Del Valle	Cortesia	2016-04-01	2016-04-15
+13	12	3	4	8	500	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	13	3	4	8	300	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+7	2	3	4	4	1000	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	3	3	4	4	200	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+12	1	4	4	17	15000	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+7	4	3	4	4	200	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	5	3	4	4	300	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	10	3	4	4	400	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	11	3	4	4	100	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	12	3	4	4	500	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+7	13	3	4	4	300	2016-04-25	17539051	Eduar	Esparragoza	2016-04-01	2016-04-15
+8	2	4	4	11	950	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+12	2	4	4	17	1500	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	3	4	4	17	300	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	4	4	4	17	300	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	5	4	4	17	450	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+8	3	4	4	11	190	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+13	1	3	4	8	10000	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+12	10	4	4	17	600	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	11	4	4	17	150	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	12	4	4	17	750	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+12	13	4	4	17	450	2016-04-25	19016737	Oriana	Escobar Arteaga	2016-04-01	2016-04-15
+4	1	3	4	10	12000	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+8	4	4	4	11	190	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+8	5	4	4	11	285	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+8	10	4	4	11	380	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+8	11	4	4	11	95	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+8	12	4	4	11	475	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+8	13	4	4	11	285	2016-04-25	19435734	Jacobo	Vicent	2016-04-01	2016-04-15
+6	2	3	4	4	1500	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	3	3	4	4	300	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	4	3	4	4	300	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	5	3	4	4	450	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	10	3	4	4	600	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	11	3	4	4	150	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	12	3	4	4	750	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+6	13	3	4	4	450	2016-04-25	14055678	Monica Yesenia	Ferrer Murguey	2016-04-01	2016-04-15
+13	2	3	4	8	1000	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	3	3	4	8	200	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	4	3	4	8	200	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	5	3	4	8	300	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	10	3	4	8	400	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+13	11	3	4	8	100	2016-04-25	20903635	Jose	Carvajal	2016-04-01	2016-04-15
+3	2	6	4	1	333.00200000000001	2016-04-25	8382020	Milagros Del Valle	Cortesia	2016-04-01	2016-04-15
+4	2	3	4	10	1200	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	3	3	4	10	240	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	4	3	4	10	240	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	5	3	4	10	360	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	10	3	4	10	480	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	11	3	4	10	120	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	12	3	4	10	600	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+4	13	3	4	10	360	2016-04-25	17285212	Maria Virgina	Martinez Morales	2016-04-01	2016-04-15
+5	1	7	4	10	15000	2016-04-26	19682712	Jose Gregorio	Cortesia Rojas	2016-04-15	2016-04-30
+7	1	3	4	4	10000	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+8	1	4	4	11	9500	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+9	1	7	4	17	15000	2016-04-26	19232006	Pedro Jose	Barrientos Moreno	2016-04-15	2016-04-30
+10	1	2	4	6	9500	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+11	1	4	4	6	11000	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	2	4	4	6	1100	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	3	4	4	6	220	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	4	4	4	6	220	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	5	4	4	6	330	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	10	4	4	6	440	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	11	4	4	6	110	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	12	4	4	6	550	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+11	13	4	4	6	330	2016-04-26	24438142	Corina Alexandra	Marcano Cordoba	2016-04-15	2016-04-30
+4	27	3	4	10	40	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+10	2	2	4	6	950	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	3	2	4	6	190	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	4	2	4	6	190	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	5	2	4	6	285	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	10	2	4	6	380	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	11	2	4	6	95	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	12	2	4	6	475	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+10	13	2	4	6	285	2016-04-26	13242023	Gustavo	Vargas	2016-04-15	2016-04-30
+3	1	6	4	1	3330.02	2016-04-26	8382020	Milagros Del Valle	Cortesia	2016-04-15	2016-04-30
+13	12	3	4	8	500	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	13	3	4	8	300	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+12	1	4	4	17	15000	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+8	2	4	4	11	950	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+12	2	4	4	17	1500	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	3	4	4	17	300	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	4	4	4	17	300	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	5	4	4	17	450	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+8	3	4	4	11	190	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+13	1	3	4	8	10000	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+12	10	4	4	17	600	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	11	4	4	17	150	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	12	4	4	17	750	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+12	13	4	4	17	450	2016-04-26	19016737	Oriana	Escobar Arteaga	2016-04-15	2016-04-30
+8	4	4	4	11	190	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+8	5	4	4	11	285	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+8	10	4	4	11	380	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+8	11	4	4	11	95	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+8	12	4	4	11	475	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+8	13	4	4	11	285	2016-04-26	19435734	Jacobo	Vicent	2016-04-15	2016-04-30
+6	2	3	4	4	1500	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	3	3	4	4	300	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	4	3	4	4	300	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	5	3	4	4	450	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	10	3	4	4	600	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	11	3	4	4	150	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	12	3	4	4	750	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+6	13	3	4	4	450	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+13	2	3	4	8	1000	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	3	3	4	8	200	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	4	3	4	8	200	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	5	3	4	8	300	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	10	3	4	8	400	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+13	11	3	4	8	100	2016-04-26	20903635	Jose	Carvajal	2016-04-15	2016-04-30
+6	1	3	4	4	10000	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-15	2016-04-30
+7	2	3	4	4	1000	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	3	3	4	4	200	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	4	3	4	4	200	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	5	3	4	4	300	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	10	3	4	4	400	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	11	3	4	4	100	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	12	3	4	4	500	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+7	13	3	4	4	300	2016-04-26	17539051	Eduar	Esparragoza	2016-04-15	2016-04-30
+3	2	6	4	1	333.00200000000001	2016-04-26	8382020	Milagros Del Valle	Cortesia	2016-04-15	2016-04-30
+4	1	3	4	10	13000	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	2	3	4	10	1170	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	3	3	4	10	260	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	4	3	4	10	260	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	5	3	4	10	390	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	10	3	4	10	520	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	11	3	4	10	130	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	12	3	4	10	650	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	13	3	4	10	390	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	6	3	4	10	5000	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-15	2016-04-30
+4	9	3	4	10	78000	2016-04-26	17285212	Maria Virgina	Martinez Morales	2016-04-26	2016-04-26
+6	9	3	4	4	60000	2016-04-26	14055678	Monica Yesenia	Ferrer Murguey	2016-04-26	2016-04-26
+7	9	3	4	4	60000	2016-04-26	17539051	Eduar	Esparragoza	2016-04-26	2016-04-26
+13	9	3	4	8	60000	2016-04-26	20903635	Jose	Carvajal	2016-04-26	2016-04-26
+\.
+
+
+--
+-- Data for Name: partida; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY partida (cod_partida, partida, tipo, id_periodicidad, descripcion) FROM stdin;
+19	Nacimiento por Hijo	Asignacion	1	Doscientos cincuenta (250) Bs. por hijo
+20	Beca Estudiantil	Asignacion	1	Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.
+22	Juguetes	Asignacion	5	Doscientos (200) Bs, para los empleados y obrero con hijos.
+24	Aumento de sueldo	Asignacion	5	Quince por ciento (15%) de aumento anual 15 de Enero (Solo Empleados Fijos y Jubilados Empleados).
+28	Gastos Mortuorios	Asignacion	1	Doscientos veinte (220) Bs
+29	Uniformes Empleados	Asignacion	1	Trescientos (300) Bs
+30	Prima de Profesionalizacion	Asignacion	1	Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.
+31	Jerarquia	Asignacion	1	Veinte (20) Bs  (Pagados a Directores y Coordinadores).
+7	Vacaciones	Asignacion	5	75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario
+17	Vacaciones Fraccionadas	Asignacion	5	6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad
+18	Vaciones Vencidas	Asignacion	5	Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute
+23	Pension por Sobrevivientes	Asignacion	1	Cien por ciento (100%) del sueldo base (se incluye en la nómina la persona a que se le va a pagar la pensión).
+34	Sindicato Extraordinario	Deduccion	5	Mil (1.000) Bs Anual (en el aguinaldo).
+8	Matrimonio	Asignacion	1	500 Bs, por Matrimonio
+25	Matrimonio	Asignacion	1	Quinientos (500) Bs por casamiento
+21	Becas, útiles y uniformes	Asignacion	5	Becas, útiles y uniformes. Doscientos diez (210) Bs. anual, para los empleados y obrero con hijos
+14	Inasistencias	Deduccion	1	Se descuenta los dias que no trabajo
+15	Farmacia	Credito	1	Credito
+1	Sueldo Base	Asignacion	1	sueldo quincenal
+9	Aguinaldos	Asignacion	5	Noventa (90) días de salario (tres (3) meses de salario pagados todos los treinta (30) de noviembre).
+2	Aporte Patronal IVSS	Asignacion	1	Aporte del trabajador segun la ley del IVSS
+3	Aporte Patronal L.P.H.	Asignacion	1	Aporte del trabajador segun la ley de politica habitacional
+4	Aporte Patronal Ley de Paro Forsozo	Asignacion	1	Aporte del trabajador segun la ley del paro forozoso
+5	Aporte Patronal Fondo de Jubilacion	Asignacion	1	Fondo de Jubilacion segun la ley
+6	Muebleria	Credito	1	Credito
+10	Aporte Trabajador IVSS	Deduccion	1	Aporte Trabajador IVSS
+11	Aporte Trabajador L.P.H.	Deduccion	1	Aporte Trabajador L.P.H.
+12	Aporte Trabajador Ley de Paro Forzoso	Deduccion	1	Aporte Trabajador Ley de Paro Forzoso
+13	Aporte Trabajador Fondo de Jubilacion	Deduccion	1	Aporte Trabajador Fondo de Jubilacion
+27	Prima de transporte	Asignacion	9	Ochenta (80) Bs. mensual Cuarenta (40) Bs. Quincenal
+32	Caja de Ahorro	Deduccion	9	Diez por ciento (10) % mensual Quince por ciento (15) % Quincenal
+33	Sindicato	Deduccion	9	Veinte decimas (0,20) Bs. mensual Diez decimas (0,10) Bs. Quincenal
+16	Antiguedad Acumulada	Asignacion	9	5 Bs. se multiplica por cada año de servicio
+26	Hogar	Asignacion	9	Veinte (20) Bs. mensual Diez (10) Bs. Quincenal
+35	Horas Extras	Asignacion	1	Horas extras pagadas segun la ley organica
+36	Bono por excelencia	Asignacion	1	se paga 1000
+\.
+
+
+--
+-- Name: partida_cod_partida_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('partida_cod_partida_seq', 1, false);
+
+
+--
+-- Data for Name: periodicidad; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY periodicidad (id_periodicidad, periodicidad, dias) FROM stdin;
+3	Trimestral	90
+4	Semestral	180
+5	Anual	365
+1	Quincenal	15
+9	Mensual	30
+7	Semanal	7
+8	Diario	1
+\.
+
+
+--
+-- Name: periodicidad_id_periodicidad_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('periodicidad_id_periodicidad_seq', 1, false);
+
+
+--
+-- Data for Name: permiso; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY permiso (id_permiso, permiso, dias_min, dias_max) FROM stdin;
+1	Permisos Generales	0	0
+8	Permisos por Actividades Culturales y Deportivas	0	0
+9	Permisos para Asuntos Legales	0	0
+11	Permiso por Casamiento	20	20
+10	Permiso por Fallecimiento Familiar	20	20
+7	Permisos por Nacimiento	10	10
+5	Permiso por Enfermedad Familiar	1	35
+3	Permiso Post-Natal	84	84
+2	Permiso Pre-Natal	42	42
+4	Permiso por Enfermedad	0	0
+12	Permiso Vacacional 5 años de antiguedad	15	15
+13	Permiso Vacacional 10 años de antiguedad	18	18
+14	Permiso Vacacional 15 años de antiguedad	21	21
+15	Permiso Vacacional mayor 16 años de antiguedad	25	25
+\.
+
+
+--
+-- Data for Name: permiso_empleado; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY permiso_empleado (id_permiso, cod_empleado, fecha_inicio, fecha_final) FROM stdin;
+1	5	2016-04-26	2016-04-27
+\.
+
+
+--
+-- Name: permiso_id_permiso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('permiso_id_permiso_seq', 1, false);
+
+
+--
+-- Data for Name: profesion; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY profesion (id_profesion, profesion) FROM stdin;
+1	Prescolar
+2	Primaria
+3	Secundaria
+4	Bachiller
+5	Tecnico Medio
+6	Tecnico Superior Universitario
+7	Universitario
+8	Sin Profesion
+\.
+
+
+--
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('profesion_id_profesion_seq', 1, false);
+
+
+--
+-- Data for Name: tipo_nomina; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY tipo_nomina (id_tipo_nomina, tipo_nomina) FROM stdin;
+2	Obrero Fijo
+3	Empleado Contratado
+4	Empleado Fijo
+5	Jubilado
+6	Penisonado
+7	Honorarios Profesionales
+1	Obrero Contratado
+\.
+
+
+--
+-- Name: tipo_nomina_id_tipo_nomina_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('tipo_nomina_id_tipo_nomina_seq', 1, false);
+
+
+--
+-- Data for Name: unidad_administrativa; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY unidad_administrativa (id_unidad_administrativa, unidad_administrativa) FROM stdin;
+2	Sindicatura
+3	Auditoria Interna
+4	Direccion General
+5	Hacienda Municipal
+6	Recursos Humanos
+7	Turismo
+8	Infraestructura
+9	Catastro
+10	Informatica
+11	Desarrollo Social
+12	Instituto Municipal del Deporte
+13	Instituto de la Mujer
+14	Proteccion Civil
+16	Instituto Municipal de la Policia
+17	Instituto Municipal de Vivienda
+15	Instituto de Proteccion del Niña,Niño y Adolescent
+1	Despacho Alcalde
+\.
+
+
+--
+-- Name: unidad_administrativa_id_unidad_administrativa_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('unidad_administrativa_id_unidad_administrativa_seq', 1, false);
+
+
+--
+-- Data for Name: usuario; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY usuario (id_usuario, usuario, passwd, nivel) FROM stdin;
+2	Director	admin	1
+3	Asistente Administrativo I	admin	2
+4	Asistente Administrativo II	admin	3
+5	Analista de Nomina	admin	4
+\.
+
+
+--
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('usuario_id_usuario_seq', 1, false);
+
+
+--
+-- Name: banco_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY banco
+    ADD CONSTRAINT banco_pkey PRIMARY KEY (id_banco);
+
+
+--
+-- Name: cargo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY cargo
+    ADD CONSTRAINT cargo_pkey PRIMARY KEY (id_cargos);
+
+
+--
+-- Name: credito_empleado_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY credito_empleado
+    ADD CONSTRAINT credito_empleado_pkey PRIMARY KEY (cod_partida, cod_empleado, fecha_credito);
+
+
+--
+-- Name: empleado_cedula_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_cedula_key UNIQUE (cedula);
+
+
+--
+-- Name: empleado_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_pkey PRIMARY KEY (cod_empleado);
+
+
+--
+-- Name: formula_partida_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY formula_partida
+    ADD CONSTRAINT formula_partida_pkey PRIMARY KEY (id_formula);
+
+
+--
+-- Name: hijo_empleado_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY hijo_empleado
+    ADD CONSTRAINT hijo_empleado_pkey PRIMARY KEY (cod_empleado, cod_hijo);
+
+
+--
+-- Name: historial_credito_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY historial_credito
+    ADD CONSTRAINT historial_credito_pkey PRIMARY KEY (cod_empleado, cod_partida, fecha_credito);
+
+
+--
+-- Name: nomina_especial_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina_especial
+    ADD CONSTRAINT nomina_especial_pkey PRIMARY KEY (cod_empleado, cod_partida);
+
+
+--
+-- Name: nomina_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina
+    ADD CONSTRAINT nomina_pkey PRIMARY KEY (cod_empleado, cod_partida);
+
+
+--
+-- Name: numero_cuenta_numero_cuenta_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY numero_cuenta
+    ADD CONSTRAINT numero_cuenta_numero_cuenta_key UNIQUE (numero_cuenta);
+
+
+--
+-- Name: numero_cuenta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY numero_cuenta
+    ADD CONSTRAINT numero_cuenta_pkey PRIMARY KEY (id_banco, cod_empleado, numero_cuenta);
+
+
+--
+-- Name: pago_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY pago
+    ADD CONSTRAINT pago_pk PRIMARY KEY (cod_empleado, cod_partida, periodo_inicio);
+
+
+--
+-- Name: partida_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY partida
+    ADD CONSTRAINT partida_pkey PRIMARY KEY (cod_partida);
+
+
+--
+-- Name: periodicidad_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY periodicidad
+    ADD CONSTRAINT periodicidad_pkey PRIMARY KEY (id_periodicidad);
+
+
+--
+-- Name: permiso_empleado_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY permiso_empleado
+    ADD CONSTRAINT permiso_empleado_pkey PRIMARY KEY (cod_empleado, fecha_inicio);
+
+
+--
+-- Name: permiso_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY permiso
+    ADD CONSTRAINT permiso_pkey PRIMARY KEY (id_permiso);
+
+
+--
+-- Name: profesion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY profesion
+    ADD CONSTRAINT profesion_pkey PRIMARY KEY (id_profesion);
+
+
+--
+-- Name: tipo_nomina_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY tipo_nomina
+    ADD CONSTRAINT tipo_nomina_pkey PRIMARY KEY (id_tipo_nomina);
+
+
+--
+-- Name: unidad_administrativa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY unidad_administrativa
+    ADD CONSTRAINT unidad_administrativa_pkey PRIMARY KEY (id_unidad_administrativa);
+
+
+--
+-- Name: usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY usuario
+    ADD CONSTRAINT usuario_pkey PRIMARY KEY (id_usuario);
+
+
+--
+-- Name: credito_empleado_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY credito_empleado
+    ADD CONSTRAINT credito_empleado_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: credito_empleado_cod_partida_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY credito_empleado
+    ADD CONSTRAINT credito_empleado_cod_partida_fkey FOREIGN KEY (cod_partida) REFERENCES partida(cod_partida) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: empleado_id_banco_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_id_banco_fkey FOREIGN KEY (id_banco) REFERENCES banco(id_banco);
+
+
+--
+-- Name: empleado_id_cargos_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_id_cargos_fkey FOREIGN KEY (id_cargos) REFERENCES cargo(id_cargos);
+
+
+--
+-- Name: empleado_id_profesion_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_id_profesion_fkey FOREIGN KEY (id_profesion) REFERENCES profesion(id_profesion);
+
+
+--
+-- Name: empleado_id_tipo_nomina_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_id_tipo_nomina_fkey FOREIGN KEY (id_tipo_nomina) REFERENCES tipo_nomina(id_tipo_nomina);
+
+
+--
+-- Name: empleado_id_unidad_administrativa_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT empleado_id_unidad_administrativa_fkey FOREIGN KEY (id_unidad_administrativa) REFERENCES unidad_administrativa(id_unidad_administrativa);
+
+
+--
+-- Name: formula_partida_cod_partida_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY formula_partida
+    ADD CONSTRAINT formula_partida_cod_partida_fkey FOREIGN KEY (cod_partida) REFERENCES partida(cod_partida) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hijo_empleado_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY hijo_empleado
+    ADD CONSTRAINT hijo_empleado_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hijo_empleado_nivel_estudio_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY hijo_empleado
+    ADD CONSTRAINT hijo_empleado_nivel_estudio_fkey FOREIGN KEY (nivel_estudio) REFERENCES profesion(id_profesion) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: historial_credito_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY historial_credito
+    ADD CONSTRAINT historial_credito_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nomina_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina
+    ADD CONSTRAINT nomina_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nomina_cod_partida_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina
+    ADD CONSTRAINT nomina_cod_partida_fkey FOREIGN KEY (cod_partida) REFERENCES partida(cod_partida) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nomina_especial_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina_especial
+    ADD CONSTRAINT nomina_especial_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nomina_especial_cod_partida_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY nomina_especial
+    ADD CONSTRAINT nomina_especial_cod_partida_fkey FOREIGN KEY (cod_partida) REFERENCES partida(cod_partida) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: numero_cuenta_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY numero_cuenta
+    ADD CONSTRAINT numero_cuenta_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: numero_cuenta_id_banco_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY numero_cuenta
+    ADD CONSTRAINT numero_cuenta_id_banco_fkey FOREIGN KEY (id_banco) REFERENCES banco(id_banco) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: partida_id_periodicidad_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY partida
+    ADD CONSTRAINT partida_id_periodicidad_fkey FOREIGN KEY (id_periodicidad) REFERENCES periodicidad(id_periodicidad);
+
+
+--
+-- Name: permiso_empleado_cod_empleado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY permiso_empleado
+    ADD CONSTRAINT permiso_empleado_cod_empleado_fkey FOREIGN KEY (cod_empleado) REFERENCES empleado(cod_empleado) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: permiso_empleado_id_permiso_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY permiso_empleado
+    ADD CONSTRAINT permiso_empleado_id_permiso_fkey FOREIGN KEY (id_permiso) REFERENCES permiso(id_permiso) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

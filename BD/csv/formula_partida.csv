@@ -1,0 +1,62 @@
+id_formula;cod_partida;descripcion_partida;descripcion_formula;formula
+10;25;Matrimonio;Quinientos (500) Bs por casamiento;500
+13;28;Gastos Mortuorios;Doscientos veinte (220) Bs;220
+14;29;Uniformes Empleados;Trescientos (300) Bs;300
+15;30;Prima de Profesionalizacion Universitario;Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.;200
+16;30;Prima de Profesionalizacion T.S.U.;Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.;100
+17;30;Prima de Profesionalizacion Tecnico Medio;Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.;75
+18;31;Jerarquia;Veinte (20) Bs  (Pagados a Directores y Coordinadores).;20
+2;19;Nacimiento por Hijo;Doscientos cincuenta (250) Bs. por hijo;250*$cant_hijo
+3;20;Beca Estudiantil Prescolar;Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.;20*$cant_hijos
+5;20;Beca Estudiantil Secundaria;Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.;30*$cant_hijos
+6;20;Beca Estudiantil Tecnico;Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.;40*$cant_hijos
+7;21;Becas, útiles y uniformes;Becas, útiles y uniformes. Doscientos diez (210) Bs. anual, para los empleados y obrero con hijos;210*$cant_hijos
+8;22;Juguetes;Doscientos (200) Bs, para los empleados y obrero con hijos.;200*$cant_hijos
+19;2;Aporte Patronal IVSS;Segun la ley es el 9% del sueldo base;$sueldo_base*0.10
+58;34;Sindicato Extraordinario;Mil (1.000) Bs Anual (en el aguinaldo).;1000
+60;8;Matrimonio;500 Bs, por Matrimonio;500
+20;3;Aporte Patronal L.P.H.;Segun la ley se calcula el 2% del sueldo base;$sueldo_base*0.02
+21;4;Aporte Patronal Ley de Paro Forsozo;Segun la ley se calcula el 2% del sueldo base;$sueldo_base*0.02
+22;5;Aporte Patronal Fondo de Jubilacion;Segun la ley se calcula el 3% del sueldo base;$sueldo_base*0.03
+25;7;Vacaciones 3 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*81
+27;7;Vacaciones 5 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*87
+28;7;Vacaciones 6 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*90
+29;7;Vacaciones 7 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*93
+30;7;Vacaciones 8 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*96
+31;7;Vacaciones 9 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*99
+32;9;Aguinaldos;Noventa (90) días de salario (tres (3) meses de salario pagados todos los treinta (30) de noviembre).;($sueldo_base/15)*90
+33;10;Aporte Trabajador IVSS;Segun la ley se calcula el 4% del sueldo base;$sueldo_base*0.04
+34;11;Aporte Trabajador L.P.H.;Segun la ley se calcula el 1% del sueldo base;$sueldo_base*0.01
+39;17;Vacaciones Fraccionadas 2 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*78)/6
+41;17;Vacaciones Fraccionadas 4 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*84)/6
+42;17;Vacaciones Fraccionadas 5 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*87)/6
+43;17;Vacaciones Fraccionadas 6 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*90)/6
+44;17;Vacaciones Fraccionadas 7 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*93)/6
+45;17;Vacaciones Fraccionadas 8 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*96)/6
+46;17;Vacaciones Fraccionadas 9 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*99)/6
+47;18;Vaciones Vencidas 1 año de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*75)*$anos_vencidos
+48;18;Vaciones Vencidas 2 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*78)*$anos_vencidos
+49;18;Vaciones Vencidas 3 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*81)*$anos_vencidos
+50;18;Vaciones Vencidas 4 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*84)*$anos_vencidos
+51;18;Vaciones Vencidas 5 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*87)*$anos_vencidos
+24;7;Vacaciones 2 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*78
+11;26;Hogar;Veinte (20) Bs. mensual Diez (10) Bs. Quincenal;10
+12;27;Prima de transporte;Ochenta (80) Bs. mensual Cuarenta (40) Bs. Quincenal;40
+1;16;Antiguedad Acumulada;Cinco (5) Bs. mensual pagado por cada año de servicio;$antiguedad*5
+4;20;Beca Estudiantil Primaria;Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.;25*$cant_hijos
+9;24;Aumento de sueldo;Quince por ciento (15%) de aumento anual 15 de Enero (Solo Empleados Fijos y Jubilados Empleados).;$sueldo_base*0.15
+56;32;Caja de Ahorro;Diez por ciento (10) % mensual;$sueldo_base*0.1
+59;6;Muebleria;Credito;$credito/$cantidad_cuotas
+62;15;Farmacia;Credito;$credito/$cantidad_cuotas
+36;13;Aporte Trabajador Fondo de Jubilacion;Segun la ley se calcula el 3% del sueldo base;$sueldo_base*0.03
+35;12;Aporte Trabajador Ley de Paro Forzoso;Segun la ley se calcula el 0.5% del sueldo base;$sueldo_base*0.05
+23;7;Vacaciones 1 año de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*75
+26;7;Vacaciones 4 años de antiguedad;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario;($sueldo_base/15)*84
+57;33;Sindicato;Veinte decimas (0,20) Bs. mensual Diez decimas (0,10) Bs. Quincenal;0.10
+61;14;Inasistencias;Se descuenta los dias que no trabajo;($sueldo_base/15)*$inasistencias
+38;17;Vacaciones Fraccionadas 1 año de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*75)/6
+40;17;Vacaciones Fraccionadas 3 años de servicio;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad;(($sueldo_base/15)*81)/6
+52;18;Vaciones Vencidas 6 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*90)*$anos_vencidos
+53;18;Vaciones Vencidas 7 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*93)*$anos_vencidos
+54;18;Vaciones Vencidas 8 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*96)*$anos_vencidos
+55;18;Vaciones Vencidas 9 años de servicio;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute;(($sueldo_base/15)*99)*$anos_vencidos

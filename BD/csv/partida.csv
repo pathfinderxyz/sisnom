@@ -1,0 +1,35 @@
+cod_partida;partida;tipo;id_periodicidad;descripcion
+19;Nacimiento por Hijo;Asignacion;1;Doscientos cincuenta (250) Bs. por hijo
+20;Beca Estudiantil;Asignacion;1;Prescolar: Veinte (20) Bs, Primaria: Veinticinco (25) Bs, Secundaria: Treinta (30) Bs, Técnico universitario: Cuarenta (40) Bs.
+22;Juguetes;Asignacion;5;Doscientos (200) Bs, para los empleados y obrero con hijos.
+24;Aumento de sueldo;Asignacion;5;Quince por ciento (15%) de aumento anual 15 de Enero (Solo Empleados Fijos y Jubilados Empleados).
+28;Gastos Mortuorios;Asignacion;1;Doscientos veinte (220) Bs
+29;Uniformes Empleados;Asignacion;1;Trescientos (300) Bs
+30;Prima de Profesionalizacion;Asignacion;1;Universitario: Doscientos (200) Bs., T.S.U.: Cien (100) Bs., Técnico Medio: Setenta y cinco (75) Bs.
+31;Jerarquia;Asignacion;1;Veinte (20) Bs  (Pagados a Directores y Coordinadores).
+7;Vacaciones;Asignacion;5;75 dias de salario mas 3 dias por cada año de servicio hasta un maximo de 99 dias de salario
+17;Vacaciones Fraccionadas;Asignacion;5;6 dias de salarios al mes hasta llegar a los 75 dias de salario o hasta los dias de salarios correspondientes segun sus años de antiguedad
+18;Vaciones Vencidas;Asignacion;5;Setenta y cinco días de salarios (75) integrales por la cantidad de años vencidos más el año en disfrute
+23;Pension por Sobrevivientes;Asignacion;1;Cien por ciento (100%) del sueldo base (se incluye en la nómina la persona a que se le va a pagar la pensión).
+34;Sindicato Extraordinario;Deduccion;5;Mil (1.000) Bs Anual (en el aguinaldo).
+8;Matrimonio;Asignacion;1;500 Bs, por Matrimonio
+25;Matrimonio;Asignacion;1;Quinientos (500) Bs por casamiento
+21;Becas, útiles y uniformes;Asignacion;5;Becas, útiles y uniformes. Doscientos diez (210) Bs. anual, para los empleados y obrero con hijos
+14;Inasistencias;Deduccion;1;Se descuenta los dias que no trabajo
+15;Farmacia;Credito;1;Credito
+1;Sueldo Base;Asignacion;1;sueldo quincenal
+9;Aguinaldos;Asignacion;5;Noventa (90) días de salario (tres (3) meses de salario pagados todos los treinta (30) de noviembre).
+2;Aporte Patronal IVSS;Asignacion;1;Aporte del trabajador segun la ley del IVSS
+3;Aporte Patronal L.P.H.;Asignacion;1;Aporte del trabajador segun la ley de politica habitacional
+4;Aporte Patronal Ley de Paro Forsozo;Asignacion;1;Aporte del trabajador segun la ley del paro forozoso
+5;Aporte Patronal Fondo de Jubilacion;Asignacion;1;Fondo de Jubilacion segun la ley
+6;Muebleria;Credito;1;Credito
+10;Aporte Trabajador IVSS;Deduccion;1;Aporte Trabajador IVSS
+11;Aporte Trabajador L.P.H.;Deduccion;1;Aporte Trabajador L.P.H.
+12;Aporte Trabajador Ley de Paro Forzoso;Deduccion;1;Aporte Trabajador Ley de Paro Forzoso
+13;Aporte Trabajador Fondo de Jubilacion;Deduccion;1;Aporte Trabajador Fondo de Jubilacion
+27;Prima de transporte;Asignacion;9;Ochenta (80) Bs. mensual Cuarenta (40) Bs. Quincenal
+32;Caja de Ahorro;Deduccion;9;Diez por ciento (10) % mensual Quince por ciento (15) % Quincenal
+33;Sindicato;Deduccion;9;Veinte decimas (0,20) Bs. mensual Diez decimas (0,10) Bs. Quincenal
+16;Antiguedad Acumulada;Asignacion;9;5 Bs. se multiplica por cada año de servicio
+26;Hogar;Asignacion;9;Veinte (20) Bs. mensual Diez (10) Bs. Quincenal

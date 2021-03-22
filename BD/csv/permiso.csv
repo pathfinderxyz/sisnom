@@ -1,0 +1,15 @@
+id_permiso;permiso;dias_min;dias_max
+1;Permisos Generales;0;0
+8;Permisos por Actividades Culturales y Deportivas;0;0
+9;Permisos para Asuntos Legales;0;0
+12;Permiso Vacacional 5;15;15
+13;Permiso Vacacional 10;18;18
+14;Permiso Vacacional 15;21;21
+15;Permiso Vacacional mayor 16;25;25
+11;Permiso por Casamiento;20;20
+10;Permiso por Fallecimiento Familiar;20;20
+7;Permisos por Nacimiento;10;10
+5;Permiso por Enfermedad Familiar;1;35
+3;Permiso Post-Natal;84;84
+2;Permiso Pre-Natal;42;42
+4;Permiso por Enfermedad;0;0
